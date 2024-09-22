@@ -34,6 +34,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -51,14 +52,16 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@Disabled
+
 @TeleOp(name="Basic: Iterative OpMode", group="Iterative Opmode")
 public class BasicOpMode_Iterative extends OpMode
 {
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
-    private DcMotorEx leftDrive = null;
-    private DcMotorEx rightDrive = null;
+    private DcMotorEx rightFrontDrive = null;
+    private DcMotorEx rightBackDrive = null;
+    private DcMotorEx leftFrontDrive = null;
+    private DcMotorEx leftBackDrive = null;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -70,16 +73,19 @@ public class BasicOpMode_Iterative extends OpMode
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        leftDrive  = hardwareMap.get(DcMotorEx.class, "left_drive");
-        rightDrive = hardwareMap.get(DcMotorEx.class, "right_drive");
+        rightFrontDrive  = hardwareMap.get(DcMotorEx.class, "rightF_drive");
+        rightBackDrive = hardwareMap.get(DcMotorEx.class, "rightB_drive");
+        leftFrontDrive = hardwareMap.get(DcMotorEx.class, "leftF_drive");
+         leftBackDrive = hardwareMap.get(DcMotorEx.class, "leftB_drive");
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        leftDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightDrive.setDirection(DcMotor.Direction.FORWARD);
+       // leftDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
 
-//        leftDrive.setMode(RunMode.);
+//        rightFrontDrive.setMode(RunMode.);
 
         // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
@@ -106,31 +112,51 @@ public class BasicOpMode_Iterative extends OpMode
     @Override
     public void loop() {
         // Setup a variable for each drive wheel to save power level for telemetry
-        double leftPower;
-        double rightPower;
-
+//        double leftPower;
+//        double rightPower;
+mecanumDrive();
         // Choose to drive using either Tank Mode, or POV Mode
         // Comment out the method that's not used.  The default below is POV.
 
         // POV Mode uses left stick to go forward, and right stick to turn.
         // - This uses basic math to combine motions and is easier to drive straight.
-        double drive = -gamepad1.left_stick_y;
-        double turn  =  gamepad1.right_stick_x;
-        leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
-        rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
+//        double drive = -gamepad1.left_stick_y;
+//        double turn  =  gamepad1.right_stick_x;
+//        leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
+//        rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
 
-        // Tank Mode uses one stick to control each wheel.
-        // - This requires no math, but it is hard to drive forward slowly and keep straight.
-        // leftPower  = -gamepad1.left_stick_y ;
+//         Tank Mode uses one stick to control each wheel.
+//         - This requires no math, but it is hard to drive forward slowly and keep straight.
+         // leftPower  = -gamepad1.left_stick_y ;
         // rightPower = -gamepad1.right_stick_y ;
 
         // Send calculated power to wheels
-        leftDrive.setPower(leftPower);
-        rightDrive.setPower(rightPower);
+      //  leftDrive.setPower(leftPower);
+//        rightBackDrive.setPower(-rightPower);
+//        rightFrontDrive.setPower(-rightPower);
+//        leftFrontDrive.setPower(leftPower);
+//        leftBackDrive.setPower(leftPower);
+
+
 
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
-        telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
+//        telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
+    }
+
+    public void mecanumDrive() {
+         double forward = gamepad1.left_stick_y;
+         double strafe = gamepad1.left_stick_x;
+         double turn = gamepad1.right_stick_x;
+
+         double r = Math.hypot(strafe, forward);
+         double robotAngle = Math.atan2(forward, strafe) - Math.PI/4;
+         double rightX = -turn;
+         leftFrontDrive.setPower(r * Math.cos(robotAngle) - rightX);
+         rightFrontDrive.setPower(r * Math.sin(robotAngle) + rightX);
+          leftBackDrive.setPower(r * Math.sin(robotAngle) - rightX);
+        rightBackDrive.setPower(r * Math.cos(robotAngle) + rightX);
+
     }
 
     /*
